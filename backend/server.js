@@ -1,27 +1,29 @@
-import 'dotenv/config';          // load .env first
 import express from 'express';
 import cors from 'cors';
-
+import dotenv from 'dotenv';
 import connectDB from './config/mongodb.js';
-import connectCloudinary from './config/cloudinary.js';
-import userRouter from './router/userRouter.js';
 import productRouter from './router/productRouter.js';
+
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 4000;
 
-// Connect to MongoDB and Cloudinary
+// Database
 connectDB();
-connectCloudinary();
 
-app.use(express.json());
+// Middleware
 app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // ✅ Important for multer/form-data
 
-app.use('/api/user',userRouter);
-app.use('/api/product',productRouter)
+// Routes
+app.use('/api/product', productRouter);
 
-app.get('/', (_req, res) => res.send("Welcome boss"));
+app.get('/', (_req, res) => {
+  res.send("Welcome to the backend server!");
+});
 
 app.listen(port, () => {
-  console.log(`🚀 Server started on http://localhost:${port}`);
+  console.log(`🚀 Server running at http://localhost:${port}`);
 });

@@ -13,6 +13,4 @@ const ProductSchema = new Schema({
 });
 
 const ProductModel = model('Product', ProductSchema);
-
-// Correct export syntax
 export default ProductModel;
