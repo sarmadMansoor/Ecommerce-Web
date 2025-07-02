@@ -59,15 +59,50 @@ const addProduct = async (req, res) => {
 
 // Placeholder
 const listProducts = async (req, res) => {
-  res.json({ success: true, message: "Product list placeholder" });
+    try{
+        const products= await productModel.find();
+        res.json({
+          success:true,
+          products:products
+        })
+    }
+    catch(err){
+      console.error('❌ Error get product:', error.message);
+    res.status(500).json({ success: false, message: 'Error get product' });
+    }
 };
 
 const removeProduct = async (req, res) => {
-  res.json({ success: true, message: "Product remove placeholder" });
+  try {
+    const { id } = req.params;           // ← id now comes from the URL
+    const deleted = await productModel.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    res.json({ success: true, message: 'Product has been removed' });
+  } catch (err) {
+    console.error('❌ Error removing product:', err.message);
+    res.status(500).json({ success: false, message: 'Error removing product' });
+  }
 };
 
+
 const singleProduct = async (req, res) => {
-  res.json({ success: true, message: "Single product placeholder" });
+  try {
+    const { id } = req.params;
+    const product = await productModel.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    res.json({ success: true, product });
+  } catch (error) {
+    console.error('❌ Error fetching single product:', error.message);
+    res.status(500).json({ success: false, message: 'Error fetching product' });
+  }
 };
 
 export { addProduct, listProducts, removeProduct, singleProduct };
