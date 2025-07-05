@@ -1,7 +1,8 @@
-import { createContext, useState } from "react";
-import { products } from "../assets/assets"; // ✅ Correct named import
+import { createContext, useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { backendUrl } from "../App"; // Make sure this path is correct
 
 export const ShopContext = createContext();
 
@@ -9,10 +10,31 @@ const ShopContextProvider = (props) => {
   const currency = '$';
   const delivery_fee = 10;
 
+  const [products, setProducts] = useState([]); // 👈 dynamic products
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [cartItems, setCartItems] = useState({});
-  const Navigate= useNavigate();
+  const Navigate = useNavigate();
+  const [token,setToken]=useState('');
+
+  // 🔁 Fetch product list from backend
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get(`${backendUrl}/api/product/list`);
+      const data = response.data.products || response.data || [];
+
+      if (!Array.isArray(data)) throw new Error("Invalid product format");
+
+      setProducts(data);
+    } catch (error) {
+      toast.error("⚠️ Failed to load products");
+      console.error("Fetch error:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   const addToCart = async (itemId, size) => {
     if (!size) {
@@ -28,15 +50,14 @@ const ShopContextProvider = (props) => {
     }
 
     setCartItems(cartData);
-    toast.success("Item Has been Added Successfully");
+    toast.success("Item has been added successfully");
   };
 
   const getCartCount = () => {
     let totalCount = 0;
     for (const productId in cartItems) {
       for (const size in cartItems[productId]) {
-        const qty = cartItems[productId][size] || 0;
-        totalCount += qty;
+        totalCount += cartItems[productId][size] || 0;
       }
     }
     return totalCount;
@@ -47,9 +68,7 @@ const ShopContextProvider = (props) => {
     if (quantity > 0) {
       cartData[itemId][size] = quantity;
     } else {
-      // remove size entry if quantity is zero
       delete cartData[itemId][size];
-      // if no sizes remain, remove the product key
       if (Object.keys(cartData[itemId]).length === 0) {
         delete cartData[itemId];
       }
@@ -60,15 +79,13 @@ const ShopContextProvider = (props) => {
   const getCartAmount = () => {
     let totalAmount = 0;
     for (const productId in cartItems) {
-      // match using _id field
       const itemInfo = products.find(
         (product) => String(product._id) === String(productId)
       );
       if (!itemInfo) continue;
 
       for (const size in cartItems[productId]) {
-        const qty = cartItems[productId][size] || 0;
-        totalAmount += itemInfo.price * qty;
+        totalAmount += itemInfo.price * (cartItems[productId][size] || 0);
       }
     }
     return totalAmount;
@@ -86,7 +103,8 @@ const ShopContextProvider = (props) => {
     addToCart,
     getCartCount,
     updatedQuantity,
-    getCartAmount,Navigate
+    getCartAmount,
+    Navigate,token,setToken
   };
 
   return (
